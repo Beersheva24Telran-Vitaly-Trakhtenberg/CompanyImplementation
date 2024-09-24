@@ -15,10 +15,22 @@ public class CompanyImpl implements Company
     }
 
     @Override
-    public void addEmployee(Employee empl) 
+    public void addEmployee(Employee employee)
     {
-        // TODO Implement this method
-        throw new UnsupportedOperationException("Method CompanyImpl.addEmployee() not implemented yet");
+        long tmp_id = employee.getId();
+        Employee res = employees.putIfAbsent(tmp_id, employee);
+        if (res == null) {
+            throw new IllegalStateException("The Employee (id=" + tmp_id + ") already exists.");
+        }
+        addEmployeeIntoMaps(employee);
+    }
+
+    private void addEmployeeIntoMaps(Employee employee)
+    {
+        employeesDepartment.computeIfAbsent(String.valueOf(employee.getDepartmentId()), k -> new ArrayList<>()).add(employee);
+        if (employee instanceof Manager manager) {  // since Java 16: Pattern Matching for instanceof
+            managersFactor.computeIfAbsent(manager.getFactor(), k -> new ArrayList<>()).add(manager);
+        }
     }
 
     @Override
@@ -30,8 +42,18 @@ public class CompanyImpl implements Company
     @Override
     public Employee removeEmployee(long id) 
     {
+        Employee removed_employee = employees.remove(id);
+        if (removed_employee != null) {
+            removeEmployeeFromMaps(removed_employee);
+        }
+
+        return removed_employee;
+    }
+
+    private void removeEmployeeFromMaps(Employee removedEmployee)
+    {
         // TODO Implement this method
-        throw new UnsupportedOperationException("Method CompanyImpl.removeEmployee() not implemented yet");
+        throw new UnsupportedOperationException("Method CompanyImpl.removeEmployeeFromMaps() not implemented yet");
     }
 
     @Override
