@@ -9,8 +9,6 @@ import java.util.NoSuchElementException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-
-
 class CompanyTest {
 private static final long ID1 = 123;
 private static final int SALARY1 = 1000;
