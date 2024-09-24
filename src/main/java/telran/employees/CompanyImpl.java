@@ -41,6 +41,12 @@ public class CompanyImpl implements Company{
     }
 
     @Override
+    public int getDepartmentBudget(int department_id) {
+        // TODO Implement this method
+        throw new UnsupportedOperationException("Method CompanyImpl.getDepartmentBudget() not implemented yet");
+    }
+
+    @Override
     public String[] getDepartments() 
     {
         // TODO Implement this method
