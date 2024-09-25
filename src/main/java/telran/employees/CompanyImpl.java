@@ -19,7 +19,7 @@ public class CompanyImpl implements Company
     {
         long tmp_id = employee.getId();
         Employee res = employees.putIfAbsent(tmp_id, employee);
-        if (res == null) {
+        if (res != null) {
             throw new IllegalStateException("The Employee (id=" + tmp_id + ") already exists.");
         }
         addEmployeeIntoMaps(employee);
@@ -43,10 +43,12 @@ public class CompanyImpl implements Company
     public Employee removeEmployee(long id) 
     {
         Employee removed_employee = employees.get(id);
-        if (removed_employee != null) {
-            removeEmployeeFromMaps(removed_employee);
-            employees.remove(id);
+        if (removed_employee == null) {
+            throw new NoSuchElementException("The Employee (id=" + id + ") does not exist.");
         }
+
+        removeEmployeeFromMaps(removed_employee);
+        employees.remove(id);
 
         return removed_employee;
     }
@@ -119,8 +121,16 @@ public class CompanyImpl implements Company
     @Override
     public String[] getDepartments() 
     {
-        Set<String> department_names = employees_department.keySet();
-        return department_names.toArray(new String[0]);
+        Set<String> department_names = new HashSet<>();
+
+        for (List<Employee> employees : employees_department.values()) {
+            for (Employee employee : employees) {
+                department_names.add(employee.getDepartment());
+            }
+        }
+        String[] departments_array = department_names.toArray(new String[0]);
+        Arrays.sort(departments_array);
+        return departments_array;
     }
 
     @Override
@@ -196,13 +206,12 @@ public class CompanyImpl implements Company
             }
         }
 
-        private void removeEmployeeFromIndexMaps(Employee last_iterated_employee)
-        {
-            List<Employee> departmentEmployees = employees_department.get(last_iterated_employee.getDepartment());
+        private void removeEmployeeFromIndexMaps(Employee last_iterated_employee) {
+            List<Employee> departmentEmployees = employees_department.get(String.valueOf(last_iterated_employee.getDepartmentId()));
             if (departmentEmployees != null) {
                 departmentEmployees.remove(last_iterated_employee);
                 if (departmentEmployees.isEmpty()) {
-                    employees_department.remove(last_iterated_employee.getDepartment());
+                    employees_department.remove(String.valueOf(last_iterated_employee.getDepartmentId()));
                 }
             }
 
@@ -218,5 +227,4 @@ public class CompanyImpl implements Company
             }
         }
     }
-
 }
