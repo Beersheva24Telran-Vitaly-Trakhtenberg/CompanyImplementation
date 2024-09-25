@@ -20,7 +20,6 @@ public class SalesPerson extends WageEmployee{
     @Override
     public int computeSalary()
     {
-    // TODO Implement this method
-    throw new UnsupportedOperationException("Method SalesPerson.computeSalary() not implemented yet");
+        return (int) (super.computeSalary() + sales * percent/100);
     }
 }
