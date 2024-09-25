@@ -2,7 +2,8 @@ package telran.employees;
 
 import java.util.Random;
 
-public class Employee {
+public class Employee
+{
     protected long id;
     protected int basic_salary;
     protected String department;
