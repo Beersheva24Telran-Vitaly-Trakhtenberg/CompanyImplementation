@@ -1,5 +1,6 @@
 package telran.employees;
 
+import java.util.Objects;
 import java.util.Random;
 
 public class Employee
@@ -58,7 +59,17 @@ public class Employee
     @Override
     public boolean equals(Object obj) 
     {
-        // TODO Implement this method, according to only id
-        throw new UnsupportedOperationException("Method Employee.equals() not implemented yet");
+        boolean res = false;
+        if (this == obj) {
+            res = true;
+        } else if (obj != null && getClass() == obj.getClass()) {
+            if (!res) {
+                Employee employee = (Employee) obj;
+                res = basic_salary == employee.basic_salary &&
+                        department_id == employee.department_id &&
+                        Objects.equals(department, employee.department);
+            }
+        }
+        return res;
     }
 }
