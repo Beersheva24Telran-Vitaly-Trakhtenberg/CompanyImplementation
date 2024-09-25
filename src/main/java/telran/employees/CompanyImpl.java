@@ -5,8 +5,8 @@ import java.util.*;
 public class CompanyImpl implements Company
 {
     private TreeMap<Long, Employee> employees = new TreeMap<>();
-    private HashMap<String, List<Employee>> employeesDepartment = new HashMap<>();
-    private TreeMap<Float, List<Manager>> managersFactor = new TreeMap<>();
+    private HashMap<String, List<Employee>> employees_department = new HashMap<>();
+    private TreeMap<Float, List<Manager>> managers_factor = new TreeMap<>();
 
     @Override
     public Iterator<Employee> iterator() 
@@ -27,9 +27,9 @@ public class CompanyImpl implements Company
 
     private void addEmployeeIntoMaps(Employee employee)
     {
-        employeesDepartment.computeIfAbsent(String.valueOf(employee.getDepartmentId()), k -> new ArrayList<>()).add(employee);
+        employees_department.computeIfAbsent(String.valueOf(employee.getDepartmentId()), k -> new ArrayList<>()).add(employee);
         if (employee instanceof Manager manager) {  // since Java 16: Pattern Matching for instanceof
-            managersFactor.computeIfAbsent(manager.getFactor(), k -> new ArrayList<>()).add(manager);
+            managers_factor.computeIfAbsent(manager.getFactor(), k -> new ArrayList<>()).add(manager);
         }
     }
 
@@ -42,45 +42,97 @@ public class CompanyImpl implements Company
     @Override
     public Employee removeEmployee(long id) 
     {
-        Employee removed_employee = employees.remove(id);
+        Employee removed_employee = employees.get(id);
         if (removed_employee != null) {
             removeEmployeeFromMaps(removed_employee);
+            employees.remove(id);
         }
 
         return removed_employee;
     }
 
-    private void removeEmployeeFromMaps(Employee removedEmployee)
+    private void removeEmployeeFromMaps(Employee removed_employee)
     {
-        // TODO Implement this method
-        throw new UnsupportedOperationException("Method CompanyImpl.removeEmployeeFromMaps() not implemented yet");
+        String department_employee_id = String.valueOf(removed_employee.getDepartmentId());
+        List<Employee> department_employees = employees_department.get(department_employee_id);
+        if (department_employees != null) {
+            department_employees.remove(removed_employee);
+            if (department_employees.isEmpty()) {
+                employees_department.remove(department_employee_id);
+            }
+        }
+
+        if (removed_employee instanceof Manager manager) {
+            List<Manager> managers = managers_factor.get(manager.getFactor());
+            if (managers != null) {
+                managers.remove(removed_employee);
+                if (managers.isEmpty()) {
+                    managers_factor.remove(manager.getFactor());
+                }
+            }
+        }
     }
 
     @Override
-    public int getDepartmentBudget(String department) 
+    public int getDepartmentBudget(String department_name)
     {
-        // TODO Implement this method
-        throw new UnsupportedOperationException("Method CompanyImpl.getDepartmentBudget() not implemented yet");
+        int department_id = getDepartmentIDbyName(department_name);
+        return calculateDepartmentBudget(department_id);
     }
 
     @Override
-    public int getDepartmentBudget(int department_id) {
-        // TODO Implement this method
-        throw new UnsupportedOperationException("Method CompanyImpl.getDepartmentBudget() not implemented yet");
+    public int getDepartmentBudget(int department_id)
+    {
+        return calculateDepartmentBudget(department_id);
+    }
+
+    private int calculateDepartmentBudget(int department_id)
+    {
+        List<Employee> department_employees = employees_department.get(String.valueOf(department_id));
+        int sum = 0;
+        if (department_employees != null) {
+/*
+            Iterator<Employee> iterator = department_employees.iterator();
+            while (iterator.hasNext()) {
+                sum += iterator.next().computeSalary();
+            }
+*/
+            for (Employee employee : department_employees) {
+                sum += employee.computeSalary();
+            }
+        }
+
+        return sum;
+    }
+
+    private int getDepartmentIDbyName(String department_name)
+    {
+        int department_id = -1;
+        List<Employee> department_employees = employees_department.get(department_name);
+        if (department_employees != null && !department_employees.isEmpty()) {
+            department_id = department_employees.get(0).department_id;
+        }
+
+        return department_id;
     }
 
     @Override
     public String[] getDepartments() 
     {
-        // TODO Implement this method
-        throw new UnsupportedOperationException("Method CompanyImpl.getDepartments() not implemented yet");    
+        Set<String> department_names = employees_department.keySet();
+        return department_names.toArray(new String[0]);
     }
 
     @Override
-    public Manager[] getManagersWithMostFactor() 
-    {
-        // TODO Implement this method
-        throw new UnsupportedOperationException("Method CompanyImpl.getManagersWithMostFactor() not implemented yet");
+    public Manager[] getManagersWithMostFactor() {
+        Manager[] res = new Manager[0];
+        if (!managers_factor.isEmpty()) {
+            float max_factor = managers_factor.lastKey();
+            List<Manager> managers_with_max_factor = managers_factor.get(max_factor);
+            res = managers_with_max_factor.toArray(new Manager[0]);
+        }
+
+        return res;
     }
 
     private class CompanyIterator implements Iterator<Employee>
@@ -146,21 +198,21 @@ public class CompanyImpl implements Company
 
         private void removeEmployeeFromIndexMaps(Employee last_iterated_employee)
         {
-            List<Employee> departmentEmployees = employeesDepartment.get(last_iterated_employee.getDepartment());
+            List<Employee> departmentEmployees = employees_department.get(last_iterated_employee.getDepartment());
             if (departmentEmployees != null) {
                 departmentEmployees.remove(last_iterated_employee);
                 if (departmentEmployees.isEmpty()) {
-                    employeesDepartment.remove(last_iterated_employee.getDepartment());
+                    employees_department.remove(last_iterated_employee.getDepartment());
                 }
             }
 
             if (last_iterated_employee instanceof Manager) {
                 Manager manager = (Manager) last_iterated_employee;
-                List<Manager> factorManagers = managersFactor.get(manager.getFactor());
+                List<Manager> factorManagers = managers_factor.get(manager.getFactor());
                 if (factorManagers != null) {
                     factorManagers.remove(manager);
                     if (factorManagers.isEmpty()) {
-                        managersFactor.remove(manager.getFactor());
+                        managers_factor.remove(manager.getFactor());
                     }
                 }
             }
