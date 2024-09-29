@@ -13,16 +13,13 @@ class CompanyTest {
 	private static final long ID1 = 123;
 	private static final int SALARY1 = 1000;
 	private static final String DEPARTMENT1 = "QA";
-	private static final int DEPARTMENT1ID = 1;
 	private static final long ID2 = 120;
 	private static final int SALARY2 = 2000;
 	private static final long ID3 = 125;
 	private static final int SALARY3 = 3000;
 	private static final String DEPARTMENT2 = "Development";
-	private static final int DEPARTMENT2ID = 2;
 	private static final long ID4 = 200;
 	private static final String DEPARTMENT4 = "Audit";
-	private static final int DEPARTMENT4ID = 4;
 	private static final int WAGE1 = 100;
 	private static final int HOURS1 = 10;
 	private static final float FACTOR1 = 2;

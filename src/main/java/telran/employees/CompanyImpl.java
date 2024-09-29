@@ -27,7 +27,7 @@ public class CompanyImpl implements Company
 
     private void addEmployeeIntoMaps(Employee employee)
     {
-        employees_department.computeIfAbsent(String.valueOf(employee.getDepartmentId()), k -> new ArrayList<>()).add(employee);
+        employees_department.computeIfAbsent(String.valueOf(employee.getDepartment()), k -> new ArrayList<>()).add(employee);
         if (employee instanceof Manager manager) {  // since Java 16: Pattern Matching for instanceof
             managers_factor.computeIfAbsent(manager.getFactor(), k -> new ArrayList<>()).add(manager);
         }
@@ -55,12 +55,11 @@ public class CompanyImpl implements Company
 
     private void removeEmployeeFromMaps(Employee removed_employee)
     {
-        String department_employee_id = String.valueOf(removed_employee.getDepartmentId());
-        List<Employee> department_employees = employees_department.get(department_employee_id);
+        List<Employee> department_employees = employees_department.get(removed_employee.getDepartment());
         if (department_employees != null) {
             department_employees.remove(removed_employee);
             if (department_employees.isEmpty()) {
-                employees_department.remove(department_employee_id);
+                employees_department.remove(removed_employee.getDepartment());
             }
         }
 
@@ -78,19 +77,7 @@ public class CompanyImpl implements Company
     @Override
     public int getDepartmentBudget(String department_name)
     {
-        int department_id = getDepartmentIDbyName(department_name);
-        return calculateDepartmentBudget(department_id);
-    }
-
-    @Override
-    public int getDepartmentBudget(int department_id)
-    {
-        return calculateDepartmentBudget(department_id);
-    }
-
-    private int calculateDepartmentBudget(int department_id)
-    {
-        List<Employee> department_employees = employees_department.get(String.valueOf(department_id));
+        List<Employee> department_employees = employees_department.get(department_name);
         int sum = 0;
         if (department_employees != null) {
 /*
@@ -105,17 +92,6 @@ public class CompanyImpl implements Company
         }
 
         return sum;
-    }
-
-    private int getDepartmentIDbyName(String department_name)
-    {
-        int department_id = -1;
-        List<Employee> department_employees = employees_department.get(department_name);
-        if (department_employees != null && !department_employees.isEmpty()) {
-            department_id = department_employees.get(0).department_id;
-        }
-
-        return department_id;
     }
 
     @Override
@@ -207,11 +183,11 @@ public class CompanyImpl implements Company
         }
 
         private void removeEmployeeFromIndexMaps(Employee last_iterated_employee) {
-            List<Employee> departmentEmployees = employees_department.get(String.valueOf(last_iterated_employee.getDepartmentId()));
+            List<Employee> departmentEmployees = employees_department.get(last_iterated_employee.getDepartment());
             if (departmentEmployees != null) {
                 departmentEmployees.remove(last_iterated_employee);
                 if (departmentEmployees.isEmpty()) {
-                    employees_department.remove(String.valueOf(last_iterated_employee.getDepartmentId()));
+                    employees_department.remove(last_iterated_employee.getDepartment());
                 }
             }
 
