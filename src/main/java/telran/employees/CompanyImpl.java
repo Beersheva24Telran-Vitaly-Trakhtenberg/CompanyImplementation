@@ -1,12 +1,78 @@
 package telran.employees;
 
 import java.util.*;
+import java.io.*;
+import java.nio.file.*;
 
-public class CompanyImpl implements Company
+import telran.io.Persistable;
+
+public class CompanyImpl implements Company, Persistable
 {
     private TreeMap<Long, Employee> employees = new TreeMap<>();
     private HashMap<String, List<Employee>> employees_department = new HashMap<>();
     private TreeMap<Float, List<Manager>> managers_factor = new TreeMap<>();
+
+    private class CompanyIterator implements Iterator<Employee>
+    {
+        private final Iterator<Employee> iterator = employees.values().iterator();
+        private Employee last_iterated;
+
+        /**
+         * Returns {@code true} if the iteration has more elements.
+         * (In other words, returns {@code true} if {@link #next} would
+         * return an element rather than throwing an exception.)
+         *
+         * @return {@code true} if the iteration has more elements
+         */
+        @Override
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+
+        /**
+         * Returns the next element in the iteration.
+         *
+         * @return the next element in the iteration
+         * @throws NoSuchElementException if the iteration has no more elements
+         */
+        @Override
+        public Employee next()
+        {
+            last_iterated = iterator.next();
+            return last_iterated;
+        }
+
+        /**
+         * Removes from the underlying collection the last element returned
+         * by this iterator (optional operation).  This method can be called
+         * only once per call to {@link #next}.
+         * <p>
+         * The behavior of an iterator is unspecified if the underlying collection
+         * is modified while the iteration is in progress in any way other than by
+         * calling this method, unless an overriding class has specified a
+         * concurrent modification policy.
+         * <p>
+         * The behavior of an iterator is unspecified if this method is called
+         * after a call to the {@link #forEachRemaining forEachRemaining} method.
+         *
+         * @throws UnsupportedOperationException if the {@code remove}
+         *                                       operation is not supported by this iterator
+         * @throws IllegalStateException         if the {@code next} method has not
+         *                                       yet been called, or the {@code remove} method has already
+         *                                       been called after the last call to the {@code next}
+         *                                       method
+         * @implSpec The default implementation throws an instance of
+         * {@link UnsupportedOperationException} and performs no other action.
+         */
+        @Override
+        public void remove() {
+            iterator.remove();
+            if (last_iterated != null) {
+                removeEmployeeFromIndexMaps(last_iterated);
+                last_iterated = null;
+            }
+        }
+    }
 
     @Override
     public Iterator<Employee> iterator() 
@@ -18,8 +84,8 @@ public class CompanyImpl implements Company
     public void addEmployee(Employee employee)
     {
         long tmp_id = employee.getId();
-        Employee res = employees.putIfAbsent(tmp_id, employee);
-        if (res != null) {
+        Employee empl = employees.putIfAbsent(tmp_id, employee);
+        if (empl != null) {
             throw new IllegalStateException("The Employee (id=" + tmp_id + ") already exists.");
         }
         addEmployeeIntoMaps(employee);
@@ -47,30 +113,24 @@ public class CompanyImpl implements Company
             throw new NoSuchElementException("The Employee (id=" + id + ") does not exist.");
         }
 
-        removeEmployeeFromMaps(removed_employee);
+        removeEmployeeFromIndexMaps(removed_employee);
         employees.remove(id);
 
         return removed_employee;
     }
 
-    private void removeEmployeeFromMaps(Employee removed_employee)
-    {
-        List<Employee> department_employees = employees_department.get(removed_employee.getDepartment());
-        if (department_employees != null) {
-            department_employees.remove(removed_employee);
-            if (department_employees.isEmpty()) {
-                employees_department.remove(removed_employee.getDepartment());
-            }
-        }
-
+    private void removeEmployeeFromIndexMaps(Employee removed_employee) {
+        removeIndexMap(removed_employee.getDepartment(), employees_department, removed_employee);
         if (removed_employee instanceof Manager manager) {
-            List<Manager> managers = managers_factor.get(manager.getFactor());
-            if (managers != null) {
-                managers.remove(removed_employee);
-                if (managers.isEmpty()) {
-                    managers_factor.remove(manager.getFactor());
-                }
-            }
+            removeIndexMap(manager.getFactor(), managers_factor, manager);
+        }
+    }
+
+    private <K, V extends Employee> void removeIndexMap(K key, Map<K, List<V>> map, V empl) {
+        List<V> list = map.get(key);
+        list.remove(empl);
+        if (list.isEmpty()) {
+            map.remove(key);
         }
     }
 
@@ -121,86 +181,22 @@ public class CompanyImpl implements Company
         return res;
     }
 
-    private class CompanyIterator implements Iterator<Employee>
-    {
-        private final Iterator<Employee> iterator = employees.values().iterator();
-        private Employee last_iterated;
-
-        /**
-         * Returns {@code true} if the iteration has more elements.
-         * (In other words, returns {@code true} if {@link #next} would
-         * return an element rather than throwing an exception.)
-         *
-         * @return {@code true} if the iteration has more elements
-         */
-        @Override
-        public boolean hasNext() {
-            return iterator.hasNext();
+    @Override
+    public void saveToFile(String fileName) {
+        try (PrintWriter writer = new PrintWriter(fileName)) {
+            forEach(writer::println);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+    }
 
-        /**
-         * Returns the next element in the iteration.
-         *
-         * @return the next element in the iteration
-         * @throws NoSuchElementException if the iteration has no more elements
-         */
-        @Override
-        public Employee next() 
-        {
-            last_iterated = iterator.next();
-            return last_iterated;
-        }
-
-        /**
-         * Removes from the underlying collection the last element returned
-         * by this iterator (optional operation).  This method can be called
-         * only once per call to {@link #next}.
-         * <p>
-         * The behavior of an iterator is unspecified if the underlying collection
-         * is modified while the iteration is in progress in any way other than by
-         * calling this method, unless an overriding class has specified a
-         * concurrent modification policy.
-         * <p>
-         * The behavior of an iterator is unspecified if this method is called
-         * after a call to the {@link #forEachRemaining forEachRemaining} method.
-         *
-         * @throws UnsupportedOperationException if the {@code remove}
-         *                                       operation is not supported by this iterator
-         * @throws IllegalStateException         if the {@code next} method has not
-         *                                       yet been called, or the {@code remove} method has already
-         *                                       been called after the last call to the {@code next}
-         *                                       method
-         * @implSpec The default implementation throws an instance of
-         * {@link UnsupportedOperationException} and performs no other action.
-         */
-        @Override
-        public void remove() {
-            iterator.remove();
-            if (last_iterated != null) {
-                removeEmployeeFromIndexMaps(last_iterated);
-                last_iterated = null;
-            }
-        }
-
-        private void removeEmployeeFromIndexMaps(Employee last_iterated_employee) {
-            List<Employee> departmentEmployees = employees_department.get(last_iterated_employee.getDepartment());
-            if (departmentEmployees != null) {
-                departmentEmployees.remove(last_iterated_employee);
-                if (departmentEmployees.isEmpty()) {
-                    employees_department.remove(last_iterated_employee.getDepartment());
-                }
-            }
-
-            if (last_iterated_employee instanceof Manager) {
-                Manager manager = (Manager) last_iterated_employee;
-                List<Manager> factorManagers = managers_factor.get(manager.getFactor());
-                if (factorManagers != null) {
-                    factorManagers.remove(manager);
-                    if (factorManagers.isEmpty()) {
-                        managers_factor.remove(manager.getFactor());
-                    }
-                }
-            }
+    @Override
+    public void restoreFromFile(String fileName) {
+        try (BufferedReader reader = Files.newBufferedReader(Path.of(fileName))) {
+            reader.lines().map(Employee::getEmployeeFromJSON).forEach(this::addEmployee);
+        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }
